@@ -15,4 +15,12 @@ MAINTENANCE_MODE_REDIRECT_URL = getattr(settings, 'MAINTENANCE_MODE_REDIRECT_URL
 MAINTENANCE_MODE_STATE_FILE_PATH = getattr(settings, 'MAINTENANCE_MODE_STATE_FILE_PATH', os.path.join(os.path.abspath(os.path.dirname(__file__)), 'maintenance_mode_state.txt'))
 MAINTENANCE_MODE_TEMPLATE = getattr(settings, 'MAINTENANCE_MODE_TEMPLATE', '503.html')
 MAINTENANCE_MODE_TEMPLATE_CONTEXT = getattr(settings, 'MAINTENANCE_MODE_TEMPLATE_CONTEXT', None)
+MAINTENANCE_MODE_STORAGE = getattr(settings, 'MAINTENANCE_MODE_STORAGE', 'local')
 
+
+# S3
+
+AWS_ACCESS_KEY = getattr(settings, 'AWS_ACCESS_KEY', None)
+AWS_S3_REGION = getattr(settings, 'AWS_S3_REGION', None)
+AWS_SECRET_KEY = getattr(settings, 'AWS_SECRET_KEY', None)
+AWS_S3_BUCKET = getattr(settings, 'AWS_S3_BUCKET', None)

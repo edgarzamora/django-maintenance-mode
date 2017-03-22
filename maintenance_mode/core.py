@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from maintenance_mode import io, settings
+from django.core.cache import cache
 
 
 def get_io():
@@ -17,10 +18,26 @@ def get_io():
 
 
 def get_maintenance_mode():
+    value = None
 
-    value = get_io().read_file(settings.MAINTENANCE_MODE_STATE_FILE_PATH, '0')
+    if settings.MAINTENANCE_MODE_CACHE:
+        # If cache enabled, try to get the value from cache.
+        value = cache.get(settings.MAINTENANCE_MODE_CACHE_KEY)
 
-    if not value in ['0', '1']:
+    if not value:
+        value = get_io().read_file(
+            settings.MAINTENANCE_MODE_STATE_FILE_PATH, '0')
+        if settings.MAINTENANCE_MODE_CACHE:
+            # If cache enabled, and we are here means that the value is not in
+            # cache yet. So we will set the value received from the file to
+            # cache.
+            cache.set(
+                settings.MAINTENANCE_MODE_CACHE_KEY,
+                value,
+                settings.MAINTENANCE_MODE_CACHE_TIMEOUT
+            )
+
+    if value not in ['0', '1']:
         raise ValueError('state file content value is not 0|1')
 
     value = bool(int(value))
@@ -35,3 +52,7 @@ def set_maintenance_mode(value):
     value = str(int(value))
 
     get_io().write_file(settings.MAINTENANCE_MODE_STATE_FILE_PATH, value)
+
+    if settings.MAINTENANCE_MODE_CACHE:
+        # Disable the cache.
+        cache.delete(settings.MAINTENANCE_MODE_CACHE_KEY)

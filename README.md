@@ -51,6 +51,16 @@ MAINTENANCE_MODE_STORAGE = 'local'
 # cache configuration on the Django project.
 MAINTENANCE_MODE_CACHE = False
 
+# by default, the key used for cache is "maintenance_mode_state". You
+# can customize the key name. If cache not enabled this value will be
+# ignored.
+MAINTENANCE_MODE_CACHE_KEY = 'maintenance_mode_state'
+
+# It’s the number of seconds the value should be stored in the cache
+# By default is None (the value will be cached forever).
+# If MAINTENANCE_MODE_CACHE is false this value is ignored.
+MAINTENANCE_MODE_CACHE_TIMEOUT = None
+
 #list of ip-addresses that will not be affected by the maintenance-mode
 #ip-addresses will be used to compile regular expressions objects
 MAINTENANCE_MODE_IGNORE_IP_ADDRESSES = ()
@@ -91,6 +101,21 @@ AWS_S3_REGION = ''
 AWS_SECRET_KEY = ''
 AWS_S3_BUCKET = ''
 ```
+#### Using **CACHE**
+
+In case that you are running a multi-server environment and you chose the AWS S3 storage backend, we recommend to use the cache functionality. The cache can be used also using the local storage mode, but if you already have this value in your local machine maybe it is not necessary, but it is up to you.
+The maintenance mode middleware needs to check the maintenance mode status for each query received to know if the mode is enabled or not. 
+Once you chose to store this value in S3, it means that you will need to make one request to S3 for each query. 
+In order to reduce the number of requests to S3, we offer the possibility to save this value in a cache system. 
+
+Using the configuration values reported above, you can enable/disable the cache, and also you can define the cached timeout. 
+
+If the cache is enabled:
+
+- It only will call S3 each time that the mode status change. When a WRITE acction is done to S3, the cache value will be disabled.
+- When one query comes in, it will try to read the value from cache. If the value is not in the cache or it is disabled, it will go to S3 to take the status value. Once it takes the value, it will add this value on the cache. So, the next queries will read this value from cache.  e to store this value in S3, it means that you will need to make one request to S3 for each query.
+
+This library will use the default Cache server configured in the Django project. For more information related on Cache for Django visit this link: [https://docs.djangoproject.com/en/1.10/topics/cache/](https://docs.djangoproject.com/en/1.10/topics/cache/)
 
 #### Extra configuration
 Add **maintenance_mode.urls** to ``urls.py`` if you want superusers able to set maintenance_mode using urls.

@@ -30,8 +30,9 @@ All these settings are optional, if not defined in ``settings.py`` the default v
 # if True the maintenance-mode will be activated
 MAINTENANCE_MODE = False
 
-# by default, a file named "maintenance_mode_state.txt" will be created in the same directory of the settings.py file
-# you can customize the state file path in case the default one is not writable
+# by default, a file named "maintenance_mode_state.txt" will be created 
+# in the same directory of the settings.py file you can customize the 
+# state file path in case the default one is not writable
 MAINTENANCE_MODE_STATE_FILE_PATH = 'maintenance_mode_state.txt'
 
 # if True the staff will not see the maintenance-mode page
@@ -40,10 +41,15 @@ MAINTENANCE_MODE_IGNORE_STAFF = False
 # if True the superuser will not see the maintenance-mode page
 MAINTENANCE_MODE_IGNORE_SUPERUSER = False
 
-# By default the value is 'local', which save the mode status in the local machine.
-# If the server is running in more than one server it allows to save the file in AWS S3
-# using the Third part library boto. See AWS S3 section below for more information. 
+# By default the value is 'local', which save the mode status in 
+# the local machine. If the server is running in more than one server 
+# it allows to save the file in AWS S3 using the Third part library 
+# boto. See AWS S3 section below for more information. 
 MAINTENANCE_MODE_STORAGE = 'local'
+
+# if True the maintenance mode status will be cached in the default 
+# cache configuration on the Django project.
+MAINTENANCE_MODE_CACHE = False
 
 #list of ip-addresses that will not be affected by the maintenance-mode
 #ip-addresses will be used to compile regular expressions objects
@@ -53,17 +59,20 @@ MAINTENANCE_MODE_IGNORE_IP_ADDRESSES = ()
 # urls will be used to compile regular expressions objects
 MAINTENANCE_MODE_IGNORE_URLS = ()
 
-# if True the maintenance mode will not return 503 response while running tests
-# useful for running tests while maintenance mode is on, before opening the site to public use
+# if True the maintenance mode will not return 503 response while 
+# running tests useful for running tests while maintenance mode is on, 
+# before opening the site to public use
 MAINTENANCE_MODE_IGNORE_TEST = False
 
-# the absolute url where users will be redirected to during maintenance-mode
+# the absolute url where users will be redirected to during
+# maintenance-mode
 MAINTENANCE_MODE_REDIRECT_URL = None
 
 # the template that will be shown by the maintenance-mode page
 MAINTENANCE_MODE_TEMPLATE = '503.html'
 
-# the path of the function that will return the template context -> 'myapp.mymodule.myfunction'
+# the path of the function that will return the template 
+# context -> 'myapp.mymodule.myfunction'
 MAINTENANCE_MODE_TEMPLATE_CONTEXT = None
 ```
 
@@ -115,7 +124,9 @@ TEMPLATES = [
 
 ####Python
 ```python
-from maintenance_mode.core import get_maintenance_mode, set_maintenance_mode
+from maintenance_mode.core import (
+    get_maintenance_mode, set_maintenance_mode
+)
 
 set_maintenance_mode(True)
 

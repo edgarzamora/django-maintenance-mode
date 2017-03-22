@@ -22,7 +22,7 @@ def get_template_context(request):
 
 
 @override_settings(
-    MIDDLEWARE_CLASSES = [
+    MIDDLEWARE_CLASSES=[
         'django.contrib.sessions.middleware.SessionMiddleware',
         'django.middleware.common.CommonMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -32,14 +32,14 @@ def get_template_context(request):
     ROOT_URLCONF = 'tests.urls',
 
     #for django < 1.8
-    TEMPLATE_CONTEXT_PROCESSORS = (
+    TEMPLATE_CONTEXT_PROCESSORS=(
         'django.contrib.auth.context_processors.auth',
         'django.core.context_processors.request',
         'maintenance_mode.context_processors.maintenance_mode',
     ),
 
     #for django >= 1.8
-    TEMPLATES = [
+    TEMPLATES=[
         {
             'BACKEND': 'django.template.backends.django.DjangoTemplates',
             'DIRS': [],
@@ -60,12 +60,14 @@ class MaintenanceModeTestCase(TestCase):
 
         self.anonymous_user = AnonymousUser
 
-        self.staff_user = User.objects.create_user('staff-user', 'staff@django-maintenance-mode.test', 'test')
-        self.staff_user.is_staff=True
+        self.staff_user = User.objects.create_user(
+            'staff-user', 'staff@django-maintenance-mode.test', 'test')
+        self.staff_user.is_staff = True
         self.staff_user.save()
 
-        self.superuser = User.objects.create_user('superuser', 'superuser@django-maintenance-mode.test', 'test')
-        self.superuser.is_superuser=True
+        self.superuser = User.objects.create_user(
+            'superuser', 'superuser@django-maintenance-mode.test', 'test')
+        self.superuser.is_superuser = True
         self.superuser.save()
 
         self.client = Client()
@@ -121,34 +123,36 @@ class MaintenanceModeTestCase(TestCase):
         except OSError:
             pass
 
-    def test_io(self):
+    def test_generic_io(self):
 
         self.__reset_state()
 
         file_path = settings.MAINTENANCE_MODE_STATE_FILE_PATH
 
-        val = io.read_file(file_path)
+        io_instance = io.GenericIO()
+
+        val = io_instance.read_file(file_path)
         self.assertEqual(val, '')
 
-        val = io.write_file(file_path, 'test')
+        val = io_instance.write_file(file_path, 'test')
         self.assertTrue(val)
 
-        #ensure overwrite instead of append
-        val = io.write_file(file_path, 'test')
-        val = io.write_file(file_path, 'test')
-        val = io.read_file(file_path)
+        # ensure overwrite instead of append
+        val = io_instance.write_file(file_path, 'test')
+        val = io_instance.write_file(file_path, 'test')
+        val = io_instance.read_file(file_path)
         self.assertEqual(val, 'test')
 
-    def test_io_invalid_file_path(self):
+    def test_generic_io_invalid_file_path(self):
 
         self.__reset_state()
 
         file_path = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ:/maintenance_mode_state.txt'
-
-        val = io.write_file(file_path, 'test')
+        io_instance = io.GenericIO()
+        val = io_instance.write_file(file_path, 'test')
         self.assertFalse(val)
 
-        val = io.read_file(file_path)
+        val = io_instance.read_file(file_path)
         self.assertEqual(val, '')
 
     def test_core(self):
@@ -167,10 +171,20 @@ class MaintenanceModeTestCase(TestCase):
 
         self.__reset_state()
 
-        val = io.write_file(settings.MAINTENANCE_MODE_STATE_FILE_PATH, 'not bool')
+        val = core.get_io().write_file(
+            settings.MAINTENANCE_MODE_STATE_FILE_PATH,
+            'not bool'
+        )
         self.assertTrue(val)
         self.assertRaises(ValueError, core.get_maintenance_mode)
         self.assertRaises(TypeError, core.set_maintenance_mode, 'not bool')
+
+    def test_core_get_io(self):
+        self.__reset_state()
+
+        io_instance = core.get_io()
+
+        self.assertIsInstance(io_instance, io.GenericIO)
 
     def test_management_commands(self):
 

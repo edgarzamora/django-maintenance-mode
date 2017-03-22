@@ -26,24 +26,10 @@ from maintenance_mode import core, settings, utils, io
 
 class MaintenanceModeMiddleware(__MaintenanceModeMiddlewareBaseClass):
 
-    def get_io(self):
-        if settings.MAINTENANCE_MODE_STORAGE is 's3':
-            self.io_instance = io.S3IO(
-                aws_s3_region=settings.AWS_S3_REGION,
-                access_key=settings.AWS_ACCESS_KEY,
-                secret_key=settings.AWS_SECRET_KEY,
-                bucket=settings.AWS_S3_BUCKET
-            )
-
-        else:
-            self.io_instance = io.GenericIO()
-
 
     def process_request(self, request):
 
-        io_instance = self.get_io()
-
-        if settings.MAINTENANCE_MODE or core.get_maintenance_mode(io_instance):
+        if settings.MAINTENANCE_MODE or core.get_maintenance_mode():
 
             try:
                 url_off = reverse('maintenance_mode_off')

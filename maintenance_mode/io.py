@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from boto.s3 import connect_to_region, key, bucket
+from boto.s3 import connect_to_region, key
 
 
 class GenericIO(object):
@@ -48,6 +48,9 @@ class S3IO(GenericIO):
 
     def read_file(self, file_path, default_content=''):
         """ TODO: Add docs """
+
+        self.set_connection()
+
         try:
             s3_bucket = self.s3_connection.get_bucket(self.bucket)
             s3_key = key.Key(s3_bucket, file_path)
@@ -59,7 +62,7 @@ class S3IO(GenericIO):
     def write_file(self, file_path, content):
         """ TODO: Add docs """
 
-        self.s3_connection()
+        self.set_connection()
 
         try:
             s3_bucket = self.s3_connection.get_bucket(self.bucket)
@@ -68,6 +71,5 @@ class S3IO(GenericIO):
                 'Content-Type': 'text/plain',
             })
             return True
-
         except Exception:
             return False

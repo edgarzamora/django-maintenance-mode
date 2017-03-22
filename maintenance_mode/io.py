@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from boto.s3 import connect_to_region, key, bucket
+from boto.s3 import connect_to_region, key
 
 
 class GenericIO(object):
@@ -71,6 +71,5 @@ class S3IO(GenericIO):
                 'Content-Type': 'text/plain',
             })
             return True
-
         except Exception:
             return False

@@ -40,6 +40,11 @@ MAINTENANCE_MODE_IGNORE_STAFF = False
 #if True the superuser will not see the maintenance-mode page
 MAINTENANCE_MODE_IGNORE_SUPERUSER = False
 
+# By default the value is 'local', which save the mode status in the local machine.
+# If the server is running in more than one server it allows to save the file in AWS S3
+# using the Third part library boto. Change 'local' to 's3'.
+MAINTENANCE_MODE_STORAGE = 'local'
+
 #list of ip-addresses that will not be affected by the maintenance-mode
 #ip-addresses will be used to compile regular expressions objects
 MAINTENANCE_MODE_IGNORE_IP_ADDRESSES = ()

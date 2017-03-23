@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from maintenance_mode import io, settings
-from django.core.cache import cache
+from maintenance_mode import settings
+import importlib
+
+if settings.MAINTENANCE_MODE_CACHE:
+    from django.core.cache import cache
 
 
 def get_io():
-    if settings.MAINTENANCE_MODE_STORAGE is 's3':
-        return io.S3IO(
-            aws_s3_region=settings.AWS_S3_REGION,
-            access_key=settings.AWS_ACCESS_KEY,
-            secret_key=settings.AWS_SECRET_KEY,
-            bucket=settings.AWS_S3_BUCKET
-        )
-
-    else:
-        return io.GenericIO()
+    module_name = "maintenance_mode.io.{backend}".format(
+        backend=settings.MAINTENANCE_MODE_STORAGE
+    )
+    module = importlib.import_module(module_name)
+    return getattr(module, "IO")()
 
 
 def get_maintenance_mode():

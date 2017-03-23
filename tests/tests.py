@@ -11,14 +11,17 @@ if django.VERSION < (1, 10):
 else:
     from django.urls import reverse
 
-from maintenance_mode import core, io, middleware, settings, views
+from maintenance_mode import core, middleware, settings, views
+
+import maintenance_mode.io.local as io_local
+from maintenance_mode.io.abstract import AbstractIO
 
 import os
 import re
 
 
 def get_template_context(request):
-    return { 'TEST_MAINTENANCE_MODE_TEMPLATE_CONTEXT':True }
+    return {'TEST_MAINTENANCE_MODE_TEMPLATE_CONTEXT': True}
 
 
 @override_settings(
@@ -29,7 +32,7 @@ def get_template_context(request):
 
         'maintenance_mode.middleware.MaintenanceModeMiddleware',
     ],
-    ROOT_URLCONF = 'tests.urls',
+    ROOT_URLCONF='tests.urls',
 
     #for django < 1.8
     TEMPLATE_CONTEXT_PROCESSORS=(
@@ -123,13 +126,13 @@ class MaintenanceModeTestCase(TestCase):
         except OSError:
             pass
 
-    def test_generic_io(self):
+    def test_local_io(self):
 
         self.__reset_state()
 
         file_path = settings.MAINTENANCE_MODE_STATE_FILE_PATH
 
-        io_instance = io.GenericIO()
+        io_instance = io_local.IO()
 
         val = io_instance.read_file(file_path)
         self.assertEqual(val, '')
@@ -148,7 +151,7 @@ class MaintenanceModeTestCase(TestCase):
         self.__reset_state()
 
         file_path = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ:/maintenance_mode_state.txt'
-        io_instance = io.GenericIO()
+        io_instance = io_local.IO()
         val = io_instance.write_file(file_path, 'test')
         self.assertFalse(val)
 
@@ -179,12 +182,13 @@ class MaintenanceModeTestCase(TestCase):
         self.assertRaises(ValueError, core.get_maintenance_mode)
         self.assertRaises(TypeError, core.set_maintenance_mode, 'not bool')
 
-    def test_core_get_io(self):
+    def test_core_get_io_local(self):
         self.__reset_state()
 
         io_instance = core.get_io()
 
-        self.assertIsInstance(io_instance, io.GenericIO)
+        self.assertIsInstance(io_instance, AbstractIO)
+        self.assertIsInstance(io_instance, io_local.IO)
 
     def test_management_commands(self):
 

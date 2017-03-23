@@ -10,7 +10,7 @@ from maintenance_mode.io import AbstractIO
 from maintenance_mode import settings
 
 from boto.s3 import connect_to_region, key
-
+from boto.exception import BotoServerError, BotoClientError
 
 class IO(AbstractIO):
     """ IO class to connect to S3 backend """
@@ -41,5 +41,20 @@ class IO(AbstractIO):
             s3_key = key.Key(s3_bucket, file_path)
             return s3_key.get_contents_as_string()
 
-        except Exception:
+        except BotoServerError:
             return default_content
+
+    def write_file(self, file_path, content):
+        """ TODO: Add docs """
+
+        self.set_connection()
+
+        try:
+            s3_bucket = self.s3_connection.get_bucket(self.bucket)
+            s3_key = key.Key(s3_bucket, file_path)
+            s3_key.set_contents_from_string(content, headers={
+                'Content-Type': 'text/plain',
+            })
+            return True
+        except BotoServerError:
+            return False

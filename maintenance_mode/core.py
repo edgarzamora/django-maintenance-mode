@@ -12,8 +12,8 @@ def get_io():
         backend=settings.MAINTENANCE_MODE_STORAGE
     )
     module = importlib.import_module(module_name)
-    return getattr(module, "IO")()
-
+    instance = getattr(module, "IO")()
+    return instance
 
 def get_maintenance_mode():
     value = None

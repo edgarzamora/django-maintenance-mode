@@ -1,23 +1,21 @@
 # -*- coding: utf-8 -*-
-
+import importlib
 import django
+import os
+import re
+
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import Client, RequestFactory, TestCase, override_settings
+from maintenance_mode import core, middleware, settings, views
+
+from maintenance_mode.io.abstract import AbstractIO
 
 if django.VERSION < (1, 10):
     from django.core.urlresolvers import reverse
 else:
     from django.urls import reverse
-
-from maintenance_mode import core, middleware, settings, views
-
-import maintenance_mode.io.local as io_local
-from maintenance_mode.io.abstract import AbstractIO
-
-import os
-import re
 
 
 def get_template_context(request):
@@ -115,24 +113,46 @@ class MaintenanceModeTestCase(TestCase):
     def __logout(self):
         self.client.logout()
 
+    def __delete_file(self):
+
+        file_path = settings.MAINTENANCE_MODE_STATE_FILE_PATH
+
+        if settings.MAINTENANCE_MODE_STORAGE == 's3':
+            from boto.s3 import connect_to_region, key
+
+            s3_connection = connect_to_region(
+                settings.AWS_S3_REGION,
+                aws_access_key_id=settings.AWS_ACCESS_KEY,
+                aws_secret_access_key=settings.AWS_SECRET_KEY
+            )
+            s3_bucket = s3_connection.get_bucket(settings.AWS_S3_BUCKET)
+            s3_key = key.Key(s3_bucket, file_path)
+            s3_bucket.delete_key(s3_key)
+
+        if settings.MAINTENANCE_MODE_STORAGE == 'local':
+            try:
+                os.remove(file_path)
+            except OSError:
+                pass
+
     def __reset_state(self):
 
         settings.MAINTENANCE_MODE = False
         core.set_maintenance_mode(False)
+        self.__delete_file()
 
-        try:
-            os.remove(settings.MAINTENANCE_MODE_STATE_FILE_PATH)
-
-        except OSError:
-            pass
-
-    def test_local_io(self):
+    def test_io(self):
 
         self.__reset_state()
 
         file_path = settings.MAINTENANCE_MODE_STATE_FILE_PATH
 
-        io_instance = io_local.IO()
+        module_name = "maintenance_mode.io.{backend}".format(
+            backend=settings.MAINTENANCE_MODE_STORAGE
+        )
+        module = importlib.import_module(module_name)
+
+        io_instance = getattr(module, "IO")()
 
         val = io_instance.read_file(file_path)
         self.assertEqual(val, '')
@@ -151,9 +171,15 @@ class MaintenanceModeTestCase(TestCase):
         self.__reset_state()
 
         file_path = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ:/maintenance_mode_state.txt'
-        io_instance = io_local.IO()
-        val = io_instance.write_file(file_path, 'test')
-        self.assertFalse(val)
+        module_name = "maintenance_mode.io.{backend}".format(
+            backend=settings.MAINTENANCE_MODE_STORAGE
+        )
+        module = importlib.import_module(module_name)
+        io_instance = getattr(module, "IO")()
+
+        if settings.MAINTENANCE_MODE_STORAGE != 's3':
+            val = io_instance.write_file(file_path, 'test')
+            self.assertFalse(val)
 
         val = io_instance.read_file(file_path)
         self.assertEqual(val, '')
@@ -182,13 +208,11 @@ class MaintenanceModeTestCase(TestCase):
         self.assertRaises(ValueError, core.get_maintenance_mode)
         self.assertRaises(TypeError, core.set_maintenance_mode, 'not bool')
 
-    def test_core_get_io_local(self):
+    def test_core_get_io(self):
         self.__reset_state()
 
         io_instance = core.get_io()
-
         self.assertIsInstance(io_instance, AbstractIO)
-        self.assertIsInstance(io_instance, io_local.IO)
 
     def test_management_commands(self):
 
